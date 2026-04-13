@@ -8,6 +8,80 @@ const EMPTY = {
   memo: '',
 }
 
+/* ── DrugForm을 컴포넌트 밖에 정의 (포커스 유지) ── */
+function DrugForm({ f, setF }) {
+  return (
+    <>
+      {/* 약물명 + 제형 */}
+      <div className="form-row">
+        <div className="fg">
+          <label>약물명</label>
+          <input type="text" value={f.name} onChange={e => setF(p => ({ ...p, name: e.target.value }))} placeholder="예: Omeprazole" />
+        </div>
+        <div className="fg">
+          <label>제형</label>
+          <select value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}>
+            <option value="injection">주사제 (ml)</option>
+            <option value="oral">경구제 (정)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 농도 */}
+      <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
+        <div className="fg">
+          <label>{f.type === 'injection' ? '농도 (mg/ml)' : '함량 (mg/정)'}</label>
+          <input type="number" value={f.conc} onChange={e => setF(p => ({ ...p, conc: e.target.value }))} placeholder="예: 5" step="0.01" min="0" />
+        </div>
+      </div>
+
+      {/* 개 용량 */}
+      <div className="species-form-section">
+        <div className="species-form-label dog">🐶 개 용량</div>
+        <div className="form-row three-col">
+          <div className="fg">
+            <label>용량 (mg/kg)</label>
+            <input type="number" value={f.dogDose} onChange={e => setF(p => ({ ...p, dogDose: e.target.value }))} placeholder="예: 1" step="0.01" min="0" />
+          </div>
+          <div className="fg">
+            <label>최소 (mg/kg)</label>
+            <input type="number" value={f.dogMin} onChange={e => setF(p => ({ ...p, dogMin: e.target.value }))} step="0.01" min="0" />
+          </div>
+          <div className="fg">
+            <label>최대 (mg/kg)</label>
+            <input type="number" value={f.dogMax} onChange={e => setF(p => ({ ...p, dogMax: e.target.value }))} step="0.01" min="0" />
+          </div>
+        </div>
+      </div>
+
+      {/* 고양이 용량 */}
+      <div className="species-form-section">
+        <div className="species-form-label cat">🐱 고양이 용량</div>
+        <div className="form-row three-col">
+          <div className="fg">
+            <label>용량 (mg/kg)</label>
+            <input type="number" value={f.catDose} onChange={e => setF(p => ({ ...p, catDose: e.target.value }))} placeholder="예: 1" step="0.01" min="0" />
+          </div>
+          <div className="fg">
+            <label>최소 (mg/kg)</label>
+            <input type="number" value={f.catMin} onChange={e => setF(p => ({ ...p, catMin: e.target.value }))} step="0.01" min="0" />
+          </div>
+          <div className="fg">
+            <label>최대 (mg/kg)</label>
+            <input type="number" value={f.catMax} onChange={e => setF(p => ({ ...p, catMax: e.target.value }))} step="0.01" min="0" />
+          </div>
+        </div>
+      </div>
+
+      {/* 메모 */}
+      <div className="fg" style={{ marginBottom: '12px' }}>
+        <label>메모/주의사항 (선택)</label>
+        <textarea value={f.memo} onChange={e => setF(p => ({ ...p, memo: e.target.value }))} placeholder="예: 신부전 시 용량 감소 필요" />
+      </div>
+    </>
+  )
+}
+
 export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggleFav, importDrugs }) {
   const [form, setForm]         = useState(EMPTY)
   const [addMsg, setAddMsg]     = useState({ text: '', ok: true })
@@ -87,78 +161,6 @@ export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggl
     deleteDrug(i)
   }
 
-  /* ── 폼 컴포넌트 ── */
-  const DrugForm = ({ f, setF }) => (
-    <>
-      {/* 약물명 + 제형 */}
-      <div className="form-row">
-        <div className="fg">
-          <label>약물명</label>
-          <input type="text" value={f.name} onChange={e => setF(p => ({ ...p, name: e.target.value }))} placeholder="예: Omeprazole" />
-        </div>
-        <div className="fg">
-          <label>제형</label>
-          <select value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}>
-            <option value="injection">주사제 (ml)</option>
-            <option value="oral">경구제 (정)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* 농도 */}
-      <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
-        <div className="fg">
-          <label>{f.type === 'injection' ? '농도 (mg/ml)' : '함량 (mg/정)'}</label>
-          <input type="number" value={f.conc} onChange={e => setF(p => ({ ...p, conc: e.target.value }))} placeholder="예: 5" step="0.01" min="0" />
-        </div>
-      </div>
-
-      {/* 개 용량 */}
-      <div className="species-form-section">
-        <div className="species-form-label dog">🐶 개 용량</div>
-        <div className="form-row three-col">
-          <div className="fg">
-            <label>용량 (mg/kg)</label>
-            <input type="number" value={f.dogDose} onChange={e => setF(p => ({ ...p, dogDose: e.target.value }))} placeholder="예: 1" step="0.01" min="0" />
-          </div>
-          <div className="fg">
-            <label>최소 (mg/kg)</label>
-            <input type="number" value={f.dogMin} onChange={e => setF(p => ({ ...p, dogMin: e.target.value }))} step="0.01" min="0" />
-          </div>
-          <div className="fg">
-            <label>최대 (mg/kg)</label>
-            <input type="number" value={f.dogMax} onChange={e => setF(p => ({ ...p, dogMax: e.target.value }))} step="0.01" min="0" />
-          </div>
-        </div>
-      </div>
-
-      {/* 고양이 용량 */}
-      <div className="species-form-section">
-        <div className="species-form-label cat">🐱 고양이 용량</div>
-        <div className="form-row three-col">
-          <div className="fg">
-            <label>용량 (mg/kg)</label>
-            <input type="number" value={f.catDose} onChange={e => setF(p => ({ ...p, catDose: e.target.value }))} placeholder="예: 1" step="0.01" min="0" />
-          </div>
-          <div className="fg">
-            <label>최소 (mg/kg)</label>
-            <input type="number" value={f.catMin} onChange={e => setF(p => ({ ...p, catMin: e.target.value }))} step="0.01" min="0" />
-          </div>
-          <div className="fg">
-            <label>최대 (mg/kg)</label>
-            <input type="number" value={f.catMax} onChange={e => setF(p => ({ ...p, catMax: e.target.value }))} step="0.01" min="0" />
-          </div>
-        </div>
-      </div>
-
-      {/* 메모 */}
-      <div className="fg" style={{ marginBottom: '12px' }}>
-        <label>메모/주의사항 (선택)</label>
-        <textarea value={f.memo} onChange={e => setF(p => ({ ...p, memo: e.target.value }))} placeholder="예: 신부전 시 용량 감소 필요" />
-      </div>
-    </>
-  )
-
   return (
     <>
       {/* 동기화 */}
@@ -207,9 +209,7 @@ export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggl
                     <span className="drug-name">{d.name}</span>
                     <TypeBadge type={d.type} />
                   </div>
-                  <div className="drug-meta">
-                    {d.conc} {d.type === 'injection' ? 'mg/ml' : 'mg/정'}
-                  </div>
+                  <div className="drug-meta">{d.conc} {d.type === 'injection' ? 'mg/ml' : 'mg/정'}</div>
                   <div className="drug-species-doses">
                     <span className="species-dose-tag dog">
                       🐶 {d.dogDose != null ? `${d.dogDose} mg/kg` : '미설정'}
