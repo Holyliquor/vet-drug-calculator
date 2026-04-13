@@ -160,9 +160,49 @@ h1  { font-size: 20px; font-weight: 600; }
 .fav-btn.on { color: var(--fav); }
 .empty { text-align: center; padding: 2rem; color: var(--text3); font-size: 13px; }
 
+/* ── 종 선택 토글 ── */
+.species-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+.species-btn {
+  flex: 1; padding: 10px 0; font-size: 15px; font-weight: 500;
+  border: 1.5px solid var(--border2); border-radius: var(--radius-sm);
+  background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.species-btn.active         { border-color: #378ADD; background: #E6F1FB; color: #185FA5; }
+@media (prefers-color-scheme: dark) {
+  .species-btn.active       { background: #1a3050; color: #7BB3E8; border-color: #7BB3E8; }
+}
+.fav-no-dose { opacity: .5; font-size: 11px; }
+
+/* ── 결과 미설정 ── */
+.result-card-na { opacity: .7; }
+.result-na { font-size: 13px; color: var(--text3); font-style: italic; margin-top: 4px; }
+
+/* ── 약물 목록 종별 용량 태그 ── */
+.drug-species-doses   { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.species-dose-tag     { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+.species-dose-tag.dog { background: #EAF3DE; color: #3B6D11; }
+.species-dose-tag.cat { background: #F0E6FB; color: #6B2FA5; }
+@media (prefers-color-scheme: dark) {
+  .species-dose-tag.dog { background: #1e3210; color: #7DBB45; }
+  .species-dose-tag.cat { background: #2a1540; color: #C084FC; }
+}
+
+/* ── 약물 폼 종 섹션 ── */
+.species-form-section  { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 12px; }
+.species-form-label    { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.species-form-label.dog { color: #3B6D11; }
+.species-form-label.cat { color: #6B2FA5; }
+@media (prefers-color-scheme: dark) {
+  .species-form-label.dog { color: #7DBB45; }
+  .species-form-label.cat { color: #C084FC; }
+}
+.form-row.three-col { grid-template-columns: 1fr 1fr 1fr; }
+
 /* ── 반응형 ── */
 @media (max-width: 480px) {
   .form-row { grid-template-columns: 1fr; }
+  .form-row.three-col { grid-template-columns: 1fr 1fr; }
   .weight-input { width: 100px; font-size: 22px; }
   .sel-item-meta { display: none; }
 }

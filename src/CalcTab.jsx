@@ -1,33 +1,34 @@
 import { useState, useRef, useEffect } from 'react'
 import { TypeBadge } from './components'
 
-export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug, removeSelected, clearSelection }) {
-  const [weight, setWeight]       = useState('')
-  const [query, setQuery]         = useState('')
-  const [ddOpen, setDdOpen]       = useState(false)
-  const searchRef                 = useRef(null)
-  const inputRef                  = useRef(null)
+const SPECIES = [
+  { key: 'dog', label: '🐶 개' },
+  { key: 'cat', label: '🐱 고양이' },
+]
 
-  const wt       = parseFloat(weight)
+export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug, removeSelected, clearSelection }) {
+  const [species, setSpecies]   = useState('dog')
+  const [weight, setWeight]     = useState('')
+  const [query, setQuery]       = useState('')
+  const [ddOpen, setDdOpen]     = useState(false)
+  const searchRef               = useRef(null)
+
+  const wt        = parseFloat(weight)
   const hasResult = selectedNames.length > 0 && !isNaN(wt) && wt > 0
-  const favDrugs  = drugs.filter(d => d.fav)
+
+  const favDrugs = drugs.filter(d => d.fav)
 
   const ddItems = query.trim()
     ? drugs.filter(d => !selectedNames.includes(d.name) && d.name.toLowerCase().includes(query.toLowerCase()))
     : recentNames.map(n => drugs.find(d => d.name === n)).filter(Boolean).filter(d => !selectedNames.includes(d.name))
 
-  const handleSelect = (name) => {
-    selectDrug(name)
-    setQuery('')
-    setDdOpen(false)
-  }
+  const getDose = (d) => species === 'dog'
+    ? { dose: d.dogDose, min: d.dogMin, max: d.dogMax }
+    : { dose: d.catDose, min: d.catMin, max: d.catMax }
 
-  const handleClear = () => {
-    setWeight('')
-    clearSelection()
-  }
+  const handleSelect = (name) => { selectDrug(name); setQuery(''); setDdOpen(false) }
+  const handleClear  = () => { setWeight(''); clearSelection() }
 
-  // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
     const handler = (e) => { if (!searchRef.current?.contains(e.target)) setDdOpen(false) }
     document.addEventListener('mousedown', handler)
@@ -36,9 +37,25 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
 
   return (
     <>
-      {/* 체중 카드 */}
+      {/* 체중 + 종 선택 카드 */}
       <div className="card">
-        <div className="sec-label">환자 체중</div>
+
+        {/* 종 토글 */}
+        <div className="sec-label">환자 종류</div>
+        <div className="species-toggle">
+          {SPECIES.map(s => (
+            <button
+              key={s.key}
+              className={`species-btn${species === s.key ? ' active' : ''}`}
+              onClick={() => setSpecies(s.key)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {/* 체중 */}
+        <div className="sec-label">체중</div>
         <div className="weight-row">
           <input
             className="weight-input"
@@ -52,19 +69,23 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
           <span className="weight-unit">kg</span>
         </div>
 
+        {/* 즐겨찾기 */}
         {favDrugs.length > 0 && (
           <>
             <div className="sec-label">즐겨찾기</div>
             <div className="fav-row">
               {favDrugs.map(d => {
                 const active = selectedNames.includes(d.name)
+                const { dose } = getDose(d)
                 return (
                   <button
                     key={d.name}
                     className={`fav-chip${active ? ' active' : ''}`}
                     onClick={() => active ? removeSelected(d.name) : handleSelect(d.name)}
                   >
-                    <span className="fav-star">★</span>{d.name}
+                    <span className="fav-star">★</span>
+                    {d.name}
+                    {dose == null && <span className="fav-no-dose"> —</span>}
                   </button>
                 )
               })}
@@ -78,7 +99,6 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
       <div className="search-anchor" ref={searchRef}>
         <span className="search-icon">🔍</span>
         <input
-          ref={inputRef}
           className="search-input"
           type="text"
           placeholder="약물명 검색 후 선택..."
@@ -92,13 +112,19 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
             <div className="dd-section">{query.trim() ? '검색 결과' : '최근 검색'}</div>
             {ddItems.length === 0
               ? <div className="dd-empty">{query.trim() ? '검색 결과 없음' : '최근 검색 없음'}</div>
-              : ddItems.map(d => (
-                <div key={d.name} className="dd-item" onMouseDown={() => handleSelect(d.name)}>
-                  <TypeBadge type={d.type} />
-                  <span className="dd-item-name">{d.name}</span>
-                  <span className="dd-item-meta">{d.dose} mg/kg{d.fav ? ' ★' : ''}</span>
-                </div>
-              ))
+              : ddItems.map(d => {
+                  const { dose } = getDose(d)
+                  return (
+                    <div key={d.name} className="dd-item" onMouseDown={() => handleSelect(d.name)}>
+                      <TypeBadge type={d.type} />
+                      <span className="dd-item-name">{d.name}</span>
+                      <span className="dd-item-meta">
+                        {dose != null ? `${dose} mg/kg` : '용량 미설정'}
+                        {d.fav ? ' ★' : ''}
+                      </span>
+                    </div>
+                  )
+                })
             }
           </div>
         )}
@@ -112,11 +138,14 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
             : selectedNames.map(name => {
                 const d = drugs.find(x => x.name === name)
                 if (!d) return null
+                const { dose } = getDose(d)
                 return (
                   <div key={name} className="sel-item">
                     <TypeBadge type={d.type} />
                     <span className="sel-item-name">{d.name}</span>
-                    <span className="sel-item-meta">{d.dose} mg/kg · {d.conc} {d.type === 'injection' ? 'mg/ml' : 'mg/정'}</span>
+                    <span className="sel-item-meta">
+                      {dose != null ? `${dose} mg/kg · ${d.conc} ${d.type === 'injection' ? 'mg/ml' : 'mg/정'}` : '용량 미설정'}
+                    </span>
                     <button className="sel-remove" onClick={() => removeSelected(name)}>✕</button>
                   </div>
                 )
@@ -132,24 +161,34 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
       {/* 결과 */}
       {hasResult && (
         <div id="results-section">
-          <div className="sec-label">계산 결과 — 체중 {wt} kg</div>
+          <div className="sec-label">
+            계산 결과 — {species === 'dog' ? '🐶 개' : '🐱 고양이'} · 체중 {wt} kg
+          </div>
           {selectedNames.map(name => {
             const d = drugs.find(x => x.name === name)
             if (!d) return null
-            const mg   = (d.dose * wt).toFixed(2)
-            const main = (d.dose * wt / d.conc).toFixed(2)
+            const { dose, min, max } = getDose(d)
+
+            if (dose == null) return (
+              <div key={name} className="result-card result-card-na">
+                <div className="result-drug">{d.name} <TypeBadge type={d.type} /></div>
+                <div className="result-na">이 약물은 {species === 'dog' ? '개' : '고양이'} 용량이 설정되지 않았어요</div>
+              </div>
+            )
+
+            const mg   = (dose * wt).toFixed(2)
+            const main = (dose * wt / d.conc).toFixed(2)
             const unit = d.type === 'injection' ? 'ml' : '정'
-            const lo   = d.min ? (d.min * wt / d.conc).toFixed(2) : '?'
-            const hi   = d.max ? (d.max * wt / d.conc).toFixed(2) : '?'
+            const lo   = min ? (min * wt / d.conc).toFixed(2) : '?'
+            const hi   = max ? (max * wt / d.conc).toFixed(2) : '?'
+
             return (
               <div key={name} className="result-card">
-                <div className="result-drug">
-                  {d.name} <TypeBadge type={d.type} />
-                </div>
+                <div className="result-drug">{d.name} <TypeBadge type={d.type} /></div>
                 <div className="result-main">{main} <span>{unit}</span></div>
-                <div className="result-detail">{d.dose} mg/kg × {wt} kg = {mg} mg · {d.conc} {d.type === 'injection' ? 'mg/ml' : 'mg/정'}</div>
-                {(d.min || d.max) && (
-                  <div className="result-range">범위: {lo} ~ {hi} {unit} &nbsp;({d.min ?? '?'} ~ {d.max ?? '?'} mg/kg)</div>
+                <div className="result-detail">{dose} mg/kg × {wt} kg = {mg} mg · {d.conc} {d.type === 'injection' ? 'mg/ml' : 'mg/정'}</div>
+                {(min || max) && (
+                  <div className="result-range">범위: {lo} ~ {hi} {unit} &nbsp;({min ?? '?'} ~ {max ?? '?'} mg/kg)</div>
                 )}
                 {d.memo && <div className="memo-box">⚠ {d.memo}</div>}
               </div>
