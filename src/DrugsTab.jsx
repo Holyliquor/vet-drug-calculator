@@ -110,7 +110,12 @@ export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggl
         const imported = JSON.parse(ev.target.result)
         if (!Array.isArray(imported)) throw new Error('올바른 형식이 아닙니다.')
         if (!imported.every(d => d.name && d.type && d.conc != null)) throw new Error('약물 데이터 형식이 잘못됐습니다.')
-        if (!window.confirm(`${imported.length}개 약물을 불러올까요? 기존 데이터는 대체됩니다.`)) return
+
+        const pw = window.prompt('관리자 비밀번호를 입력하세요')
+        if (pw === null) { e.target.value = ''; return }
+        if (pw !== '260413') { showSync('✗ 비밀번호가 틀렸습니다.', false); e.target.value = ''; return }
+
+        if (!window.confirm(`${imported.length}개 약물을 불러올까요? 기존 데이터는 대체됩니다.`)) { e.target.value = ''; return }
         importDrugs(imported); showSync(`✓ ${imported.length}개 약물을 불러왔어요.`, true)
       } catch (err) { showSync('✗ 오류: ' + err.message, false) }
       e.target.value = ''
