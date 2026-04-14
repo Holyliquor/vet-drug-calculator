@@ -23,8 +23,8 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
     : recentNames.map(n => drugs.find(d => d.name === n)).filter(Boolean).filter(d => !selectedNames.includes(d.name))
 
   const getDose = (d) => species === 'dog'
-    ? { dose: d.dogDose, min: d.dogMin, max: d.dogMax }
-    : { dose: d.catDose, min: d.catMin, max: d.catMax }
+    ? { dose: d.dogDose, min: d.dogMin, max: d.dogMax, unit: d.dogUnit || 'mg/kg' }
+    : { dose: d.catDose, min: d.catMin, max: d.catMax, unit: d.catUnit || 'mg/kg' }
 
   const handleSelect = (name) => { selectDrug(name); setQuery(''); setDdOpen(false) }
   const handleClear  = () => { setWeight(''); clearSelection() }
@@ -119,7 +119,7 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
                       <TypeBadge type={d.type} />
                       <span className="dd-item-name">{d.name}</span>
                       <span className="dd-item-meta">
-                        {dose != null ? `${dose} mg/kg` : '용량 미설정'}
+                        {dose != null ? `${dose} ${getDose(d).unit}` : '용량 미설정'}
                         {d.fav ? ' ★' : ''}
                       </span>
                     </div>
@@ -144,7 +144,7 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
                     <TypeBadge type={d.type} />
                     <span className="sel-item-name">{d.name}</span>
                     <span className="sel-item-meta">
-                      {dose != null ? `${dose} mg/kg · ${d.conc} ${d.type === 'injection' ? 'mg/ml' : 'mg/정'}` : '용량 미설정'}
+                      {dose != null ? `${dose} ${getDose(d).unit} · ${d.conc} ${d.type === 'injection' ? 'mg/ml' : 'mg/정'}` : '용량 미설정'}
                     </span>
                     <button className="sel-remove" onClick={() => removeSelected(name)}>✕</button>
                   </div>
@@ -167,7 +167,7 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
           {selectedNames.map(name => {
             const d = drugs.find(x => x.name === name)
             if (!d) return null
-            const { dose, min, max } = getDose(d)
+            const { dose, min, max, unit: doseUnit } = getDose(d)
 
             if (dose == null) return (
               <div key={name} className="result-card result-card-na">
@@ -176,19 +176,29 @@ export default function CalcTab({ drugs, selectedNames, recentNames, selectDrug,
               </div>
             )
 
-            const mg   = (dose * wt).toFixed(2)
-            const main = (dose * wt / d.conc).toFixed(2)
-            const unit = d.type === 'injection' ? 'ml' : '정'
-            const lo   = min ? (min * wt / d.conc).toFixed(2) : '?'
-            const hi   = max ? (max * wt / d.conc).toFixed(2) : '?'
+            const volUnit  = d.type === 'injection' ? 'ml' : '정'
+            const concUnit = d.type === 'injection' ? 'mg/ml' : 'mg/정'
+            const isPerKg  = doseUnit.includes('/kg')  // mg/kg 계열이면 체중 곱셈
+
+            const totalMg  = isPerKg ? (dose * wt) : dose
+            const main     = (totalMg / d.conc).toFixed(2)
+            const loMg     = min ? (isPerKg ? min * wt : min) : null
+            const hiMg     = max ? (isPerKg ? max * wt : max) : null
+            const lo       = loMg ? (loMg / d.conc).toFixed(2) : '?'
+            const hi       = hiMg ? (hiMg / d.conc).toFixed(2) : '?'
 
             return (
               <div key={name} className="result-card">
                 <div className="result-drug">{d.name} <TypeBadge type={d.type} /></div>
-                <div className="result-main">{main} <span>{unit}</span></div>
-                <div className="result-detail">{dose} mg/kg × {wt} kg = {mg} mg · {d.conc} {d.type === 'injection' ? 'mg/ml' : 'mg/정'}</div>
+                <div className="result-main">{main} <span>{volUnit}</span></div>
+                <div className="result-detail">
+                  {isPerKg
+                    ? `${dose} ${doseUnit} × ${wt} kg = ${totalMg.toFixed(2)} mg · ${d.conc} ${concUnit}`
+                    : `${dose} ${doseUnit} · ${d.conc} ${concUnit}`
+                  }
+                </div>
                 {(min || max) && (
-                  <div className="result-range">범위: {lo} ~ {hi} {unit} &nbsp;({min ?? '?'} ~ {max ?? '?'} mg/kg)</div>
+                  <div className="result-range">범위: {lo} ~ {hi} {volUnit} &nbsp;({min ?? '?'} ~ {max ?? '?'} {doseUnit})</div>
                 )}
                 {d.memo && <div className="memo-box">⚠ {d.memo}</div>}
               </div>

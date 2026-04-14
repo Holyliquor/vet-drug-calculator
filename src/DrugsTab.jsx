@@ -3,9 +3,34 @@ import { TypeBadge } from './components'
 
 const EMPTY = {
   name: '', type: 'injection', conc: '',
-  dogDose: '', dogMin: '', dogMax: '',
-  catDose: '', catMin: '', catMax: '',
+  dogDose: '', dogMin: '', dogMax: '', dogUnit: 'mg/kg',
+  catDose: '', catMin: '', catMax: '', catUnit: 'mg/kg',
   memo: '',
+}
+
+/* ── 클릭하면 편집 가능한 단위 배지 ── */
+function UnitBadge({ value, onChange }) {
+  const [editing, setEditing] = useState(false)
+  const inputRef = useRef(null)
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        className="unit-badge-input"
+        value={value}
+        autoFocus
+        onChange={e => onChange(e.target.value)}
+        onBlur={() => setEditing(false)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEditing(false) }}
+      />
+    )
+  }
+  return (
+    <span className="unit-badge" onClick={() => setEditing(true)} title="클릭하여 단위 편집">
+      ({value}) ✎
+    </span>
+  )
 }
 
 /* ── DrugForm을 컴포넌트 밖에 정의 (포커스 유지) ── */
@@ -40,15 +65,15 @@ function DrugForm({ f, setF }) {
         <div className="species-form-label dog">🐶 개 용량</div>
         <div className="form-row three-col">
           <div className="fg">
-            <label>용량 (mg/kg)</label>
+            <label>용량 <UnitBadge value={f.dogUnit} onChange={v => setF(p => ({ ...p, dogUnit: v }))} /></label>
             <input type="number" value={f.dogDose} onChange={e => setF(p => ({ ...p, dogDose: e.target.value }))} placeholder="예: 1" step="0.01" min="0" />
           </div>
           <div className="fg">
-            <label>최소 (mg/kg)</label>
+            <label>최소 <UnitBadge value={f.dogUnit} onChange={v => setF(p => ({ ...p, dogUnit: v }))} /></label>
             <input type="number" value={f.dogMin} onChange={e => setF(p => ({ ...p, dogMin: e.target.value }))} step="0.01" min="0" />
           </div>
           <div className="fg">
-            <label>최대 (mg/kg)</label>
+            <label>최대 <UnitBadge value={f.dogUnit} onChange={v => setF(p => ({ ...p, dogUnit: v }))} /></label>
             <input type="number" value={f.dogMax} onChange={e => setF(p => ({ ...p, dogMax: e.target.value }))} step="0.01" min="0" />
           </div>
         </div>
@@ -59,15 +84,15 @@ function DrugForm({ f, setF }) {
         <div className="species-form-label cat">🐱 고양이 용량</div>
         <div className="form-row three-col">
           <div className="fg">
-            <label>용량 (mg/kg)</label>
+            <label>용량 <UnitBadge value={f.catUnit} onChange={v => setF(p => ({ ...p, catUnit: v }))} /></label>
             <input type="number" value={f.catDose} onChange={e => setF(p => ({ ...p, catDose: e.target.value }))} placeholder="예: 1" step="0.01" min="0" />
           </div>
           <div className="fg">
-            <label>최소 (mg/kg)</label>
+            <label>최소 <UnitBadge value={f.catUnit} onChange={v => setF(p => ({ ...p, catUnit: v }))} /></label>
             <input type="number" value={f.catMin} onChange={e => setF(p => ({ ...p, catMin: e.target.value }))} step="0.01" min="0" />
           </div>
           <div className="fg">
-            <label>최대 (mg/kg)</label>
+            <label>최대 <UnitBadge value={f.catUnit} onChange={v => setF(p => ({ ...p, catUnit: v }))} /></label>
             <input type="number" value={f.catMax} onChange={e => setF(p => ({ ...p, catMax: e.target.value }))} step="0.01" min="0" />
           </div>
         </div>
@@ -131,8 +156,8 @@ export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggl
     if (drugs.some(d => d.name.toLowerCase() === name.toLowerCase())) { setAddMsg({ text: '이미 존재하는 약물명입니다.', ok: false }); return }
     addDrug({
       name, type: form.type, conc,
-      dogDose: parseFloat(form.dogDose) || null, dogMin: parseFloat(form.dogMin) || null, dogMax: parseFloat(form.dogMax) || null,
-      catDose: parseFloat(form.catDose) || null, catMin: parseFloat(form.catMin) || null, catMax: parseFloat(form.catMax) || null,
+      dogDose: parseFloat(form.dogDose) || null, dogMin: parseFloat(form.dogMin) || null, dogMax: parseFloat(form.dogMax) || null, dogUnit: form.dogUnit || 'mg/kg',
+      catDose: parseFloat(form.catDose) || null, catMin: parseFloat(form.catMin) || null, catMax: parseFloat(form.catMax) || null, catUnit: form.catUnit || 'mg/kg',
       memo: form.memo.trim(), fav: false,
     })
     setForm(EMPTY)
@@ -144,8 +169,8 @@ export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggl
     const d = drugs[i]; setEditIdx(i)
     setEditForm({
       name: d.name, type: d.type, conc: String(d.conc),
-      dogDose: d.dogDose != null ? String(d.dogDose) : '', dogMin: d.dogMin != null ? String(d.dogMin) : '', dogMax: d.dogMax != null ? String(d.dogMax) : '',
-      catDose: d.catDose != null ? String(d.catDose) : '', catMin: d.catMin != null ? String(d.catMin) : '', catMax: d.catMax != null ? String(d.catMax) : '',
+      dogDose: d.dogDose != null ? String(d.dogDose) : '', dogMin: d.dogMin != null ? String(d.dogMin) : '', dogMax: d.dogMax != null ? String(d.dogMax) : '', dogUnit: d.dogUnit || 'mg/kg',
+      catDose: d.catDose != null ? String(d.catDose) : '', catMin: d.catMin != null ? String(d.catMin) : '', catMax: d.catMax != null ? String(d.catMax) : '', catUnit: d.catUnit || 'mg/kg',
       memo: d.memo || '',
     })
   }
@@ -154,8 +179,8 @@ export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggl
     if (!name || isNaN(conc)) return
     updateDrug(editIdx, {
       name, type: editForm.type, conc,
-      dogDose: parseFloat(editForm.dogDose) || null, dogMin: parseFloat(editForm.dogMin) || null, dogMax: parseFloat(editForm.dogMax) || null,
-      catDose: parseFloat(editForm.catDose) || null, catMin: parseFloat(editForm.catMin) || null, catMax: parseFloat(editForm.catMax) || null,
+      dogDose: parseFloat(editForm.dogDose) || null, dogMin: parseFloat(editForm.dogMin) || null, dogMax: parseFloat(editForm.dogMax) || null, dogUnit: editForm.dogUnit || 'mg/kg',
+      catDose: parseFloat(editForm.catDose) || null, catMin: parseFloat(editForm.catMin) || null, catMax: parseFloat(editForm.catMax) || null, catUnit: editForm.catUnit || 'mg/kg',
       memo: editForm.memo.trim(),
     })
     setEditIdx(-1)
@@ -217,11 +242,11 @@ export default function DrugsTab({ drugs, addDrug, updateDrug, deleteDrug, toggl
                   <div className="drug-meta">{d.conc} {d.type === 'injection' ? 'mg/ml' : 'mg/정'}</div>
                   <div className="drug-species-doses">
                     <span className="species-dose-tag dog">
-                      🐶 {d.dogDose != null ? `${d.dogDose} mg/kg` : '미설정'}
+                      🐶 {d.dogDose != null ? `${d.dogDose} ${d.dogUnit || 'mg/kg'}` : '미설정'}
                       {(d.dogMin || d.dogMax) ? ` (${d.dogMin ?? '?'}~${d.dogMax ?? '?'})` : ''}
                     </span>
                     <span className="species-dose-tag cat">
-                      🐱 {d.catDose != null ? `${d.catDose} mg/kg` : '미설정'}
+                      🐱 {d.catDose != null ? `${d.catDose} ${d.catUnit || 'mg/kg'}` : '미설정'}
                       {(d.catMin || d.catMax) ? ` (${d.catMin ?? '?'}~${d.catMax ?? '?'})` : ''}
                     </span>
                   </div>
